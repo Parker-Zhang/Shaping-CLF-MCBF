@@ -1,0 +1,8 @@
+matplotlib==3.7.1
+matplotlib==3.4.3
+numpy==1.21.1
+qpsolvers==4.7.1
+Rtree==1.3.0
+scipy==1.6.3
+Shapely==2.1.1
+qpSWIFT: https://github.com/qpSWIFT/qpSWIFT/tree/main/python
