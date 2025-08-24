@@ -54,3 +54,11 @@ def hex_to_rgb(hex_color):
     g /= 255.0
     b /= 255.0
     return [r, g, b]
+
+def compute_traj_len(traj):
+    step, dim = traj.shape
+    traj_len = 0
+    for k in range(step-1):
+        len_ = np.linalg.norm(traj[k+1,:2]-traj[k,:2])
+        traj_len += len_
+    return traj_len

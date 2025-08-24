@@ -37,6 +37,7 @@ class Circle2DAgent():
         self.vmax = 1.0
         self.nei_agent_pos = []
         self.nei_agent_vel = []
+        self.nei_agent_deadlock_type = []
 
     def init_CLF_param(self):
         self.ellip_theta = 0
@@ -53,6 +54,7 @@ class Circle2DAgent():
         deadlock_solver_param = {"ellip_theta":self.ellip_theta, "ellip_s":self.ellip_s,}
         self.deadlock_solver = CBF_DeadlockSolver(deadlock_solver_param)
         self.deadlock_type = 1 # completely deadlock-free
+        self.nei_vel_flag = False
 
     def init_workspace(self,worksapce):
         self.workspace = copy.deepcopy(worksapce)
@@ -258,7 +260,14 @@ class Circle2DAgent():
             g_tmp[0,0:2] = -cbf_grad
             
             beta = 1
-            h_tmp = beta * cbf # - np.dot(cbf_grad, nei_agent_vel_)
+            if self.nei_vel_flag:
+                nei_deadlock_type = self.nei_agent_deadlock_type[i]
+                if self.deadlock_type == 1 and nei_deadlock_type != 1 and np.linalg.norm(self.pos_err) < 1:
+                    h_tmp = beta * cbf - np.dot(cbf_grad, nei_agent_vel_)*2.5
+                else:
+                    h_tmp = beta * cbf
+            else:
+                h_tmp = beta * cbf
             
             g = np.vstack([g,g_tmp])
             h = np.vstack([h,h_tmp])

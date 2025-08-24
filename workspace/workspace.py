@@ -13,8 +13,9 @@ Created on:     2025-06-30
 License:        MIT License
 ================================================================================
 """
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, Point
 from matplotlib.patches import Polygon as Polygon_plt
+from shapely.affinity import rotate, translate
 import numpy as np
 import copy
 from rtree import index
@@ -117,6 +118,61 @@ class WorkSpace():
             ax.plot(x,y,color = 'black', linewidth = 1, zorder = 1)
         ax.set_aspect('equal', adjustable='box')
     
+    def radomGeneratePosFromDict(self, pointN, shape_param = None, shape_flag = False):
+        excluded_region = list(self.obs_poly_set.values())
+        circ_excluded_region = copy.deepcopy(self.obs_circ_set)
+        default_dist = 10e-2
+        safe_radius = copy.deepcopy(default_dist)
 
+        shape_type = ''
+        if shape_param is not None:
+            shape_type = shape_param['type']
+            shape_charct = shape_param['charact']
+            if shape_type == 'circ':
+                safe_radius = safe_radius + shape_charct['radius']
 
-    
+        points = []
+        max_iter = 100 * pointN
+        iter_times = 0
+        point_idx = 0
+        while len(points) < pointN and iter_times <= max_iter:
+            if shape_type == 'circ':
+                x = round(np.random.uniform(self.map_range[0] + safe_radius, self.map_range[1] - safe_radius),2)
+                y = round(np.random.uniform(self.map_range[2] + safe_radius, self.map_range[3] - safe_radius),2)
+                point = Point(x, y)
+                is_within_polygon = any(polygon.distance(point) <= (safe_radius) for polygon in excluded_region)
+                is_within_circ = False
+                for circ_obs in circ_excluded_region:
+                    circ_obs_pos = np.array(circ_obs['cen_pos'])
+                    circ_obs_radius = circ_obs['radius']
+                    point_pos = np.array([x,y])
+                    if np.linalg.norm(point_pos - circ_obs_pos) < (circ_obs_radius + safe_radius):
+                        is_within_circ = True
+                        break
+                if not (is_within_polygon or is_within_circ):
+                    if safe_radius > default_dist:
+                        circ_excluded_region.append({'cen_pos':[x,y], 'radius':safe_radius})
+                    points.append((x, y))
+                    point_idx += 1
+            elif shape_type == 'poly':
+                poly_list = shape_charct['poly_list']
+                safe_dist = shape_charct.get('safe_dist', 0.1)
+                x = round(np.random.uniform(self.map_range[0] + safe_radius, self.map_range[1] - safe_radius),2)
+                y = round(np.random.uniform(self.map_range[2] + safe_radius, self.map_range[3] - safe_radius),2)
+                if shape_flag:
+                    theta = round(np.random.uniform(-np.pi,np.pi),2)
+                else:
+                    theta = 0
+                poly_shape = poly_list[point_idx % len(poly_list)]
+                shape_poly = translate(rotate(poly_shape, angle = theta/np.pi*180, origin = (0, 0)), xoff = x, yoff = y)
+                collision_flag = any(polygon.distance(shape_poly) <= (safe_dist) for polygon in excluded_region)
+                if not collision_flag:
+                    points.append((x, y, theta))
+                    point_idx += 1
+                    excluded_region.append(shape_poly)
+            else:
+                print(f"Unsupported shape type: {shape_type}")  
+                break
+            iter_times = iter_times + 1
+        point_pos = np.array(points)
+        return point_pos
