@@ -16,10 +16,6 @@ The proposed framework focuses on detecting and avoiding deadlocks in multi-robo
   - **RSC**: Recursive Safety Corridor [Github](https://github.com/PKU-MACDLab/IMPC-OB)
   - **CBF-CD**: CBF with Consistent Disturbance [paper](https://ieeexplore.ieee.org/document/7857061)
 
-## Demo Results
-### Scenario: Position Exchange
-![Demo](Figs/shaping-CLF-CBF_video.gif)
-
 ## Requirements
 - Python 3.x
 - `numpy`
